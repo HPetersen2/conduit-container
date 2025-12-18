@@ -37,14 +37,13 @@ services:
     env_file:
       - .env
 
-  # frontend:
-  #   container_name: frontend-placeholder
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   command: ["echo", "Frontend placeholder – not implemented yet"]
-  #   ports:
-  #     - "3000:3000"
+  frontend:
+    container_name: conduit-frontend
+    build:
+      context: ./conduit-frontend
+      dockerfile: frontend.Dockerfile
+    ports:
+      - "4200:8080"
 
 volumes:
   postgres_data:
