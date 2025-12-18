@@ -1,0 +1,28 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Docker
+*.pid
+*.log
+
+# Volumes / runtime data
+data/
+volumes/
+
+# Nginx / Certbot
+certbot/
+letsencrypt/
+
+# IDEs / Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Repos
+conduit-frontend/
+conduit-backend/
