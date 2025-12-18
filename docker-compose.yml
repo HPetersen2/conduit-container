@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:17
     container_name: postgres-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DATABASE_NAME}
       POSTGRES_USER: ${DATABASE_USERNAME}
@@ -10,11 +11,15 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./logs/postgres:/var/log/postgres
     env_file:
       - .env
+    labels:
+      service-role: "database"
 
-  django-web:
-    container_name: django-docker
+  backend:
+    container_name: conduit-backend
+    restart: unless-stopped
     build:
       context: ./conduit-backend
       dockerfile: backend.Dockerfile
@@ -36,14 +41,23 @@ services:
       DATABASE_PORT: ${DATABASE_PORT}
     env_file:
       - .env
+    volumes:
+      - ./logs/django:/app/logs 
+    labels:
+      service-role: "backend"
 
   frontend:
     container_name: conduit-frontend
+    restart: unless-stopped
     build:
       context: ./conduit-frontend
       dockerfile: frontend.Dockerfile
     ports:
       - "4200:8080"
+    volumes:
+      - ./logs/frontend:/var/log/nginx
+    labels:
+      service-role: "frontend"
 
 volumes:
   postgres_data:
