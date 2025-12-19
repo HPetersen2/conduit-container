@@ -16,6 +16,8 @@ services:
       - .env
     labels:
       service-role: "database"
+    networks:
+      - app_network
 
   backend:
     container_name: conduit-backend
@@ -45,6 +47,8 @@ services:
       - ./logs/django:/app/logs 
     labels:
       service-role: "backend"
+    networks:
+      - app_network
 
   frontend:
     container_name: conduit-frontend
@@ -58,6 +62,12 @@ services:
       - ./logs/frontend:/var/log/nginx
     labels:
       service-role: "frontend"
+    networks:
+      - app_network
 
 volumes:
   postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
