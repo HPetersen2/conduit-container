@@ -63,7 +63,7 @@ services:
     ports:
       - "4200:8080"
     volumes:
-      - ./logs/frontend:/var/log/nginx
+      - /var/log/nginx:/var/log/nginx
     labels:
       service-role: "frontend"
     networks:
