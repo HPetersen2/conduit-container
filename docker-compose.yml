@@ -60,10 +60,6 @@ services:
     build:
       context: ./conduit-frontend
       dockerfile: frontend.Dockerfile
-    ports:
-      - "8080"
-    volumes:
-      - /var/log/nginx:/var/log/nginx
     labels:
       service-role: "frontend"
     networks:
@@ -74,6 +70,7 @@ services:
     container_name: nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./logs/nginx:/var/log/nginx
     ports:
       - "8282:8282"
     depends_on:
