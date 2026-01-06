@@ -24,7 +24,7 @@ After installation, verify Docker:
 
 ```bash
 docker --version
-docker-compose --version
+docker compose --version
 ```
 
 ### Setup Steps
@@ -32,7 +32,7 @@ docker-compose --version
 1. Clone the project repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/HPetersen2/conduit-container.git
    cd conduit-container
    ```
 
@@ -91,16 +91,6 @@ Stop and remove containers:
 ```bash
 docker-compose down
 ```
-
----
-
-## API Reference
-
-This repository does **not** define or document concrete API endpoints.
-
-The actual API surface depends entirely on the Django backend project that is included or mounted into the backend container. Endpoint definitions, authentication, and data models must be documented within the backend repository itself.
-
-This container setup is intentionally API-agnostic and focuses solely on orchestration, networking, and runtime configuration.
 
 ---
 
