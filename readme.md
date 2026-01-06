@@ -61,13 +61,13 @@ docker-compose --version
 4. Build and start all services:
 
    ```bash
-   docker-compose up --build
+   docker compose up --build -d
    ```
 
 5. To stop and remove the containers:
 
    ```bash
-   docker-compose down
+   docker compose down
    ```
 
 ---
