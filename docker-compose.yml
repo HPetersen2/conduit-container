@@ -69,8 +69,7 @@ services:
     image: nginx:latest
     container_name: nginx
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./logs/nginx:/var/log/nginx
+      - ./conduit-frontend/dist/angular-conduit:/usr/share/nginx/html:ro
     ports:
       - "8282:8282"
     depends_on:
