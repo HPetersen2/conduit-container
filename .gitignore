@@ -22,7 +22,3 @@ letsencrypt/
 # OS
 .DS_Store
 Thumbs.db
-
-# Repos
-conduit-frontend/
-conduit-backend/
