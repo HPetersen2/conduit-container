@@ -55,7 +55,6 @@ docker compose --version
 
 2. Copy the environment template file:
 
-   **Linux / macOS**
 ```bash
    cp .env.template .env
 ```
