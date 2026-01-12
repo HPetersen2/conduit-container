@@ -53,20 +53,26 @@ docker compose --version
    cd conduit-container
 ```
 
-2. Copy the environment template file:
+2. Initialize and update Git submodules (frontend & backend):
+
+```bash
+   git submodule update --init --recursive
+```
+
+3. Copy the environment template file:
 
 ```bash
    cp .env.template .env
 ```
 
-3. Make sure Docker Desktop is installed and running.
+4. Make sure Docker Desktop is installed and running.
 
-4. Build and start all services:
+5. Build and start all services:
 ```bash
    docker compose up --build -d
 ```
 
-5. To stop and remove the containers:
+6. To stop and remove the containers:
 ```bash
    docker compose down
 ```
@@ -189,6 +195,13 @@ docker compose build backend
 Rebuild without cache (clean build):
 ```bash
 docker compose build --no-cache
+```
+
+### Updating Submodules
+
+If the Git submodules (frontend or backend) need to be updated, run the following command:
+```bash
+git pull --recurse-submodules
 ```
 
 ---
