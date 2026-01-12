@@ -49,7 +49,7 @@ docker compose --version
 
 1. Clone the project repository:
 ```bash
-   git clone https://github.com/HPetersen2/conduit-container.git
+   git clone git@github.com:HPetersen2/conduit-container.git
    cd conduit-container
 ```
 
