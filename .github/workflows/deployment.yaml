@@ -1,10 +1,26 @@
-# name: Deployment-Conduit-Container
+name: Deployment-Conduit-Container
 
-# on: 
-#   push:
-#     branches: 
-#       - infra
+on: 
+  push:
+    branches: 
+      - dev
 
-# jobs: 
-#   build:
-#     runs-on: ubuntu
+jobs: 
+  build:
+    name: Build & Push Images
+    runs-on: ubuntu-22.0
+    
+    steps: 
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: Deploy on remote VM
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
+            cd /pfad/zu/deiner/docker-compose/
+            docker-compose pull
+            docker-compose down
+            docker-compose up -d
+          EOF
