@@ -8,7 +8,7 @@ on:
 jobs: 
   build:
     name: Build & Push Images
-    runs-on: ubuntu-22.0
+    runs-on: ubuntu-22.04
     
     steps: 
       # - name: Set up SSH key
@@ -26,6 +26,16 @@ jobs:
       #     EOF
       #
 
-      - name: Test SSH
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
         run: |
-          timeout 20 ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "echo Connected"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Test SSH Connection
+        run: |
+          ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "echo Connected"
