@@ -19,7 +19,7 @@ jobs:
       - name: Deploy on remote VM
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
-            cd ${{ variables.PATH_TO_PROJECT_FOLDER }}
+            cd ${{ vars.PATH_TO_PROJECT_FOLDER }}
             docker compose pull
             docker compose down
             docker compose up -d
