@@ -19,7 +19,7 @@ jobs:
       - name: Deploy on remote VM
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
-            cd /pfad/zu/deiner/docker-compose/
+            cd /home/henrik-petersen/projects/conduit-container
             docker-compose pull
             docker-compose down
             docker-compose up -d
