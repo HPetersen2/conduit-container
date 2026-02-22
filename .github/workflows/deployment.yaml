@@ -25,6 +25,6 @@ jobs:
       #       docker-compose up -d
       #     EOF
 
-        - name: Test SSH
-          run: |
-            ssh -v -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "echo Connected"
+      - name: Test SSH
+        run: |
+          timeout 20 ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "echo Connected"
