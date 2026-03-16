@@ -26,7 +26,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./frontend.Dockerfile
+          push: false
+
       # - name: Set up SSH key
       #   uses: webfactory/ssh-agent@v0.9.0
       #   with:
