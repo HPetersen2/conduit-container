@@ -34,7 +34,7 @@ jobs:
           context: .
           file: ./frontend/frontend.Dockerfile
           push: true
-          tags: ghcr.io/hpetersen2/conduit-container/frontend:latest
+          tags: ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:${{ github.ref_name }}
 
       - name: Build backend image
         uses: docker/build-push-action@v5
@@ -42,7 +42,7 @@ jobs:
           context: .
           file: ./backend/backend.Dockerfile
           push: true
-          tags: ghcr.io/hpetersen2/conduit-container/backend:latest
+          tags: ghcr.io/${{ github.repository_owner }}/conduit-container/backend:${{ github.ref_name }}
 
       # - name: Set up SSH key
       #   uses: webfactory/ssh-agent@v0.9.0
