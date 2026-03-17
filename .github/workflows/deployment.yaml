@@ -5,7 +5,7 @@ on:
     branches: 
       - dev
 
-      
+
 jobs: 
   build:
     name: Build & Push Images
@@ -32,7 +32,7 @@ jobs:
       - name: Build frontend image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./conduit-frontend
           file: ./conduit-frontend/frontend.Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:${{ github.ref_name }}
@@ -40,7 +40,7 @@ jobs:
       - name: Build backend image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./conduit-backend
           file: ./conduit-backend/backend.Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/conduit-container/backend:${{ github.ref_name }}
