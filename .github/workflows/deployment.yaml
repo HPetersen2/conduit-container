@@ -48,6 +48,13 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/conduit-container/backend:${{ github.ref_name }}
 
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-22.04
+    needs: build
+
+    steps:
+
       - name: Create .env file
         run: |
           cat << EOF > .env
@@ -73,7 +80,7 @@ jobs:
       #     ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
       #       cd ${{ vars.PATH_TO_PROJECT_FOLDER }}
       #       docker compose pull
-      #       docker compose down
+      #       docker compose down --remove-orphans
       #       docker compose up -d
       #     EOF
           
