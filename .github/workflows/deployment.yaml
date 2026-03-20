@@ -96,7 +96,8 @@ jobs:
 
       - name: Copy .env to server
         run: |
-          scp deploy/.env ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
+          scp deploy/.env \
+          ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
 
       - name: Deploy on remote VM
         run: |
