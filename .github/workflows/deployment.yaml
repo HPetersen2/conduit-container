@@ -84,21 +84,21 @@ jobs:
           EOF
         shell: bash
 
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Copy .env to server
         run: |
           scp deploy/.env ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
 
-      # - name: Set up SSH key
-      #   uses: webfactory/ssh-agent@v0.9.0
-      #   with:
-      #     ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
-      # - name: Deploy on remote VM
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
-      #       cd ${{ vars.PATH_TO_PROJECT_FOLDER }}
-      #       docker compose pull
-      #       docker compose down --remove-orphans
-      #       docker compose up -d
-      #     EOF
+      - name: Deploy on remote VM
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
+            cd ${{ vars.PATH_TO_PROJECT_FOLDER }}
+            docker compose pull
+            docker compose down --remove-orphans
+            docker compose up -d
+          EOF
           
