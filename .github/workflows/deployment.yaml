@@ -89,6 +89,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Add SSH known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
       - name: Copy .env to server
         run: |
           scp deploy/.env ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
