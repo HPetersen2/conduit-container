@@ -38,7 +38,11 @@ jobs:
           context: ./conduit-frontend
           file: ./conduit-frontend/frontend.Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:${{ github.ref_name }}
+          build-args: |
+            BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:${{ github.sha }}
+          ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:latest
 
       - name: Build backend image
         uses: docker/build-push-action@v5
@@ -74,11 +78,15 @@ jobs:
           DATABASE_ENGINE=${{ secrets.DATABASE_ENGINE }}
           DATABASE_NAME=${{ secrets.DATABASE_NAME }}
           DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
-          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD=dbpassword }}
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
           DATABASE_HOST=${{ secrets.DATABASE_HOST }}
           DATABASE_PORT=${{ secrets.DATABASE_PORT }}
           EOF
         shell: bash
+
+      - name: Copy .env to server
+        run: |
+          scp deploy/.env ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
 
       # - name: Set up SSH key
       #   uses: webfactory/ssh-agent@v0.9.0
