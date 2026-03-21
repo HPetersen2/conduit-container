@@ -58,6 +58,7 @@ jobs:
     name: Deploy Application
     runs-on: ubuntu-22.04
     needs: build
+    
 
     steps:
       - name: Checkout repository
