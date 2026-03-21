@@ -1,20 +1,20 @@
 name: Deployment-CI-Pipeline-Conduit-Container
 
-on:
+on: 
   push:
-    branches:
+    branches: 
       - dev
 
 permissions:
   contents: read
   packages: write
 
-jobs:
+jobs: 
   build:
     name: Build & Push Images
     runs-on: ubuntu-22.04
-
-    steps:
+    
+    steps: 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -67,8 +67,8 @@ jobs:
         run: |
           mkdir -p deploy
           cat <<EOF > deploy/.env
-          REPOSITORY_OWNER=${{ github.REPOSITORY_OWNER }}
           BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
+          GITHUB_OWNER=${{ github.repository_owner }}
 
           DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_LOGLEVEL=${{ secrets.DJANGO_LOGLEVEL }}
@@ -86,6 +86,10 @@ jobs:
           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
           DATABASE_HOST=${{ secrets.DATABASE_HOST }}
           DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+
+          DJANGO_SUPERUSER_USERNAME=${{ secrets.DJANGO_SUPERUSER_USERNAME }}
+          DJANGO_SUPERUSER_EMAIL=${{ secrets.DJANGO_SUPERUSER_EMAIL }}
+          DJANGO_SUPERUSER_PASSWORD=${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
           EOF
         shell: bash
 
@@ -101,14 +105,43 @@ jobs:
 
       - name: Copy files to server
         run: |
-          scp deploy/.env ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
-          scp docker-compose.yml ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/docker-compose.yml
+          scp deploy/.env \
+            ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
+          scp docker-compose.yml \
+            ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/docker-compose.yml
 
-      - name: Deploy on remote VM
+      - name: Deploy on remote VM with rollback
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
+            set -e
             cd ${{ vars.PATH_TO_PROJECT_FOLDER }}
+
+            # Aktuell laufende Image-Tags sichern (für Rollback)
+            PREVIOUS_FRONTEND=$(docker inspect conduit-frontend --format='{{.Config.Image}}' 2>/dev/null || echo "")
+            PREVIOUS_BACKEND=$(docker inspect conduit-backend --format='{{.Config.Image}}' 2>/dev/null || echo "")
+
+            rollback() {
+              echo "Deploy fehlgeschlagen – starte Rollback..."
+              docker compose down --remove-orphans || true
+
+              if [ -n "$PREVIOUS_FRONTEND" ]; then
+                docker tag "$PREVIOUS_FRONTEND" \
+                  ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:latest
+              fi
+              if [ -n "$PREVIOUS_BACKEND" ]; then
+                docker tag "$PREVIOUS_BACKEND" \
+                  ghcr.io/${{ github.repository_owner }}/conduit-container/backend:latest
+              fi
+
+              docker compose up -d || true
+              echo "Rollback abgeschlossen."
+            }
+
+            trap rollback ERR
+
             docker compose pull
             docker compose down --remove-orphans
             docker compose up -d
+
+            echo "Deploy erfolgreich."
           EOF
