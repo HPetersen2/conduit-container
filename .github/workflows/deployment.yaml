@@ -67,6 +67,7 @@ jobs:
         run: |
           mkdir -p deploy
           cat <<EOF > deploy/.env
+          REPOSITORY_OWNER=${{ github.REPOSITORY_OWNER }}
           BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
 
           DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
