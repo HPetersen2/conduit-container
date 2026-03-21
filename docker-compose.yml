@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
     image: ghcr.io/${GITHUB_OWNER}/conduit-container/frontend:latest
     ports:
-      - "0.0.0.0:8282:80"
+      - "8282:80"
     labels:
       service-role: "frontend"
     networks:
