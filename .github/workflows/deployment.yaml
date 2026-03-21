@@ -1,20 +1,20 @@
 name: Deployment-CI-Pipeline-Conduit-Container
 
-on: 
+on:
   push:
-    branches: 
+    branches:
       - dev
 
 permissions:
   contents: read
   packages: write
 
-jobs: 
+jobs:
   build:
     name: Build & Push Images
     runs-on: ubuntu-22.04
-    
-    steps: 
+
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -68,7 +68,7 @@ jobs:
           mkdir -p deploy
           cat <<EOF > deploy/.env
           BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
-          GITHUB_OWNER=${{ github.repository_owner }}
+          REPOSITORY_OWNER=${{ github.repository_owner }}
 
           DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_LOGLEVEL=${{ secrets.DJANGO_LOGLEVEL }}
@@ -112,4 +112,3 @@ jobs:
             docker compose down --remove-orphans
             docker compose up -d
           EOF
-          

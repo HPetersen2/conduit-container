@@ -19,7 +19,7 @@ services:
   backend:
     container_name: conduit-backend
     restart: unless-stopped
-    image: ghcr.io/${GITHUB_OWNER}/conduit-container/backend:latest
+    image: ghcr.io/${repository_owner}/conduit-container/backend:latest
     ports:
       - "8000:8000"
     depends_on:
@@ -34,7 +34,7 @@ services:
   frontend:
     container_name: conduit-frontend
     restart: unless-stopped
-    image: ghcr.io/${GITHUB_OWNER}/conduit-container/frontend:latest
+    image: ghcr.io/${repository_owner}/conduit-container/frontend:latest
     ports:
       - "8282:80"
     labels:
