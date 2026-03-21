@@ -19,9 +19,7 @@ services:
   backend:
     container_name: conduit-backend
     restart: unless-stopped
-    build:
-      context: ./conduit-backend
-      dockerfile: backend.Dockerfile
+    image: ghcr.io/${GITHUB_OWNER}/conduit-container/backend:latest
     ports:
       - "8000:8000"
     depends_on:
@@ -52,13 +50,13 @@ services:
   frontend:
     container_name: conduit-frontend
     restart: unless-stopped
-    build:
-      context: ./conduit-frontend
-      dockerfile: frontend.Dockerfile
+    image: ghcr.io/${GITHUB_OWNER}/conduit-container/frontend:latest
     ports:
-      - "8282:8282"
+      - "8282:8080"
     labels:
       service-role: "frontend"
+    networks:
+      - app_network
 
 volumes:
   postgres_data:
