@@ -70,8 +70,9 @@ jobs:
         run: |
           mkdir -p deploy
           cat <<EOF > deploy/.env
+          REPOSITORY_OWNER=${{ github.repository_owner }}
+
           BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
-          GITHUB_OWNER=${{ github.repository_owner }}
 
           DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_LOGLEVEL=${{ secrets.DJANGO_LOGLEVEL }}
@@ -114,12 +115,14 @@ jobs:
             ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/docker-compose.yml
 
       - name: Deploy on remote VM with rollback
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} \
+            REPO_OWNER="$REPO_OWNER" bash << 'EOF'
             set -e
             cd ${{ vars.PATH_TO_PROJECT_FOLDER }}
 
-            # Aktuell laufende Image-Tags sichern (für Rollback)
             PREVIOUS_FRONTEND=$(docker inspect conduit-frontend --format='{{.Config.Image}}' 2>/dev/null || echo "")
             PREVIOUS_BACKEND=$(docker inspect conduit-backend --format='{{.Config.Image}}' 2>/dev/null || echo "")
 
@@ -129,11 +132,11 @@ jobs:
 
               if [ -n "$PREVIOUS_FRONTEND" ]; then
                 docker tag "$PREVIOUS_FRONTEND" \
-                  ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:latest
+                  ghcr.io/${REPO_OWNER}/conduit-container/frontend:latest
               fi
               if [ -n "$PREVIOUS_BACKEND" ]; then
                 docker tag "$PREVIOUS_BACKEND" \
-                  ghcr.io/${{ github.repository_owner }}/conduit-container/backend:latest
+                  ghcr.io/${REPO_OWNER}/conduit-container/backend:latest
               fi
 
               docker compose up -d || true
