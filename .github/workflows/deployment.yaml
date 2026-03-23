@@ -22,9 +22,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Update submodules to latest
-        run: git submodule update --remote --merge
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -35,26 +32,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build frontend image
+      - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./conduit-frontend
           file: ./conduit-frontend/frontend.Dockerfile
           push: true
-          build-args: |
-            BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:${{ github.ref_name }}
             ghcr.io/${{ github.repository_owner }}/conduit-container/frontend:latest
 
-      - name: Build backend image
+      - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
           context: ./conduit-backend
           file: ./conduit-backend/backend.Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/conduit-container/backend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/conduit-container/backend:${{ github.ref_name }}
             ghcr.io/${{ github.repository_owner }}/conduit-container/backend:latest
 
   deploy:
@@ -64,90 +59,61 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # Benötigt, um die docker-compose.yml lokal zu haben
 
       - name: Create .env file
         run: |
-          mkdir -p deploy
-          cat <<EOF > deploy/.env
-          REPOSITORY_OWNER=${{ github.repository_owner }}
-
+          cat <<EOF > .env
           BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
-
           DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_LOGLEVEL=${{ secrets.DJANGO_LOGLEVEL }}
           DEBUG=${{ secrets.DEBUG }}
           DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}
-
           CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}
           CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}
           CORS_ALLOW_CREDENTIALS=${{ secrets.CORS_ALLOW_CREDENTIALS }}
           CORS_ORIGIN_WHITELIST=${{ secrets.CORS_ORIGIN_WHITELIST }}
-
           DATABASE_ENGINE=${{ secrets.DATABASE_ENGINE }}
           DATABASE_NAME=${{ secrets.DATABASE_NAME }}
           DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
           DATABASE_HOST=${{ secrets.DATABASE_HOST }}
           DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-
-          DJANGO_SUPERUSER_USERNAME=${{ secrets.DJANGO_SUPERUSER_USERNAME }}
-          DJANGO_SUPERUSER_EMAIL=${{ secrets.DJANGO_SUPERUSER_EMAIL }}
-          DJANGO_SUPERUSER_PASSWORD=${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
           EOF
         shell: bash
 
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+      - name: Copy files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ".env,docker-compose.yml"
+          target: "/tmp" # Sicherer Zwischenstopp
 
-      - name: Add known hosts
-        run: |
-          ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Copy files to server
-        run: |
-          scp deploy/.env \
-            ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
-          scp docker-compose.yml \
-            ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ vars.PATH_TO_PROJECT_FOLDER }}/docker-compose.yml
-
-      - name: Deploy on remote VM with rollback
-        env:
-          REPO_OWNER: ${{ github.repository_owner }}
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} \
-            REPO_OWNER="$REPO_OWNER" bash << 'EOF'
-            set -e
+      - name: Execute remote SSH commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Zielordner erstellen, falls er nicht existiert
+            mkdir -p ${{ vars.PATH_TO_PROJECT_FOLDER }}
+            
+            # Dateien aus /tmp in den Projektordner verschieben
+            mv /tmp/.env ${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
+            mv /tmp/docker-compose.yml ${{ vars.PATH_TO_PROJECT_FOLDER }}/docker-compose.yml
+            
+            # In den Ordner wechseln
             cd ${{ vars.PATH_TO_PROJECT_FOLDER }}
-
-            PREVIOUS_FRONTEND=$(docker inspect conduit-frontend --format='{{.Config.Image}}' 2>/dev/null || echo "")
-            PREVIOUS_BACKEND=$(docker inspect conduit-backend --format='{{.Config.Image}}' 2>/dev/null || echo "")
-
-            rollback() {
-              echo "Deploy fehlgeschlagen – starte Rollback..."
-              docker compose down --remove-orphans || true
-
-              if [ -n "$PREVIOUS_FRONTEND" ]; then
-                docker tag "$PREVIOUS_FRONTEND" \
-                  ghcr.io/${REPO_OWNER}/conduit-container/frontend:latest
-              fi
-              if [ -n "$PREVIOUS_BACKEND" ]; then
-                docker tag "$PREVIOUS_BACKEND" \
-                  ghcr.io/${REPO_OWNER}/conduit-container/backend:latest
-              fi
-
-              docker compose up -d || true
-              echo "Rollback abgeschlossen."
-            }
-
-            trap rollback ERR
-
+            
+            # Login bei GHCR auf dem Zielserver (Wichtig für den Pull!)
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Container aktualisieren
             docker compose pull
-            docker compose down --remove-orphans
-            docker compose up -d
-
-            echo "Deploy erfolgreich."
-          EOF
+            docker compose up -d --remove-orphans
+            
+            # Optional: Aufräumen alter Images
+            docker image prune -f
