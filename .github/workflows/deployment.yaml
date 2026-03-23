@@ -59,20 +59,23 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Benötigt, um die docker-compose.yml lokal zu haben
+        uses: actions/checkout@v4
 
       - name: Create .env file
         run: |
           cat <<EOF > .env
           BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
+
           DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_LOGLEVEL=${{ secrets.DJANGO_LOGLEVEL }}
           DEBUG=${{ secrets.DEBUG }}
           DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}
+
           CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}
           CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}
           CORS_ALLOW_CREDENTIALS=${{ secrets.CORS_ALLOW_CREDENTIALS }}
           CORS_ORIGIN_WHITELIST=${{ secrets.CORS_ORIGIN_WHITELIST }}
+
           DATABASE_ENGINE=${{ secrets.DATABASE_ENGINE }}
           DATABASE_NAME=${{ secrets.DATABASE_NAME }}
           DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
@@ -89,7 +92,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: ".env,docker-compose.yml"
-          target: "/tmp" # Sicherer Zwischenstopp
+          target: "/tmp"
 
       - name: Execute remote SSH commands
         uses: appleboy/ssh-action@v1.0.3
@@ -98,22 +101,16 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Zielordner erstellen, falls er nicht existiert
             mkdir -p ${{ vars.PATH_TO_PROJECT_FOLDER }}
             
-            # Dateien aus /tmp in den Projektordner verschieben
             mv /tmp/.env ${{ vars.PATH_TO_PROJECT_FOLDER }}/.env
             mv /tmp/docker-compose.yml ${{ vars.PATH_TO_PROJECT_FOLDER }}/docker-compose.yml
             
-            # In den Ordner wechseln
             cd ${{ vars.PATH_TO_PROJECT_FOLDER }}
             
-            # Login bei GHCR auf dem Zielserver (Wichtig für den Pull!)
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Container aktualisieren
             docker compose pull
             docker compose up -d --remove-orphans
             
-            # Optional: Aufräumen alter Images
             docker image prune -f
